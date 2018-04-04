@@ -1,0 +1,56 @@
+---
+- hosts: node0
+  become: yes                           # Since sudo is deprecated
+  tasks:
+
+  # =========================== SETUP ===========================
+  - name: Install node.js
+    apt:
+      pkg: nodejs-legacy
+      state: present
+      update_cache: true
+  - name: Install npm
+    apt:
+      pkg: npm
+      state: present
+      update_cache: true
+  - name: Install forever
+    npm:
+      name: forever
+      state: present
+      global: true
+  - name: Install git
+    apt:
+      pkg: git
+      state: present
+      update_cache: true
+  - name: Clone DevOps/App repo
+    git:
+      repo: https://github.com/CSC-DevOps/App.git
+      dest: /home/vagrant/DevOps
+  - name: Install npm packages
+    command: npm install
+    args:
+      chdir: DevOps/
+
+  # =========================== TASKS ===========================
+  - name: Run the App with forever
+    command: forever start main.js 80
+    args:
+      chdir: DevOps/
+  - name: Insure latest versions of bash, openssl, openssh-client, openssh-server
+    apt:
+      pkg: "{{item}}"
+      state: latest
+      update_cache: true
+    with_items:
+      - bash
+      - openssl
+      - openssh-client
+      - openssh-server
+  - name: Remove content in /tmp/
+    file:
+      path: /tmp
+  - name: Create new /tmp/
+    file:
+      path: /tmp
